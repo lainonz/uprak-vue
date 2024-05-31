@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tokopadia</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div id="app" class="w-[1100px] mx-auto">
+      <nav class="flex justify-between p-2 bg-gray-500 mt-2 items-center">
+        <h1 class="text-3xl font-bold text-white">Tokopadia</h1>
+        <img
+          src="https://i.pinimg.com/564x/f3/16/f8/f316f89c659ac5a1a6df2e61967b1eab.jpg"
+          alt="logo"
+          class="rounded-lg"
+          width="50"
+          height="50"
+        />
+      </nav>
+      <div class="p-2 mt-2 border-[1px] border-black">
+        <div class="flex justify-between space-x-8">
+          <table>
+            <tr>
+              <td>
+                <p>No. Pesanan</p>
+              </td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="12345"
+                  class="bg-gray-600 rounded-md px-3"
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>Pelanggan</p>
+              </td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="Saaaaaa"
+                  class="bg-gray-600 rounded-md px-3"
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p>Tanggal</p>
+              </td>
+              <td>
+                <input
+                  type="date"
+                  class="bg-gray-600 rounded-md px-3 text-white"
+                />
+              </td>
+            </tr>
+          </table>
+          <div
+            class="p-2 flex-grow border-[1px] border-black text-red flex flex-col items-center justify-center"
+          >
+            <h1>Total Pembayaran</h1>
+            <p class="text-red-500">{{ currency(calculateTotalPrice()) }}</p>
+          </div>
+        </div>
+        <div class="mt-6 flex items-center justify-between">
+          <div class="flex items-center space-x-1">
+            <p>Nama Barang :</p>
+            <select
+              name="selectBarang"
+              class="p-1 rounded-md"
+              v-model="selectedProduct"
+            >
+              <option
+                v-for="(item, index) in product"
+                :key="item.nama"
+                :value="item.nama"
+              >
+                {{ item.nama }}
+              </option>
+            </select>
+          </div>
+          <div class="flex items-center space-x-1">
+            <p>Harga Barang :</p>
+            <input
+              type="text"
+              :placeholder="getPlaceholder(selectedProduct)"
+              disabled
+              class="p-1 rounded-md bg-gray-200"
+            />
+          </div>
+          <div class="flex items-center space-x-1">
+            <p>Stok :</p>
+            <input
+              type="text"
+              :placeholder="getStock(selectedProduct)"
+              disabled
+              class="p-1 rounded-md bg-gray-200"
+            />
+          </div>
+          <div class="flex items-center space-x-1">
+            <p>Qty :</p>
+            <input
+              type="number"
+              placeholder="0"
+              class="p-1 rounded-md bg-gray-200 placeholder:text-black"
+              v-model="qty"
+            />
+          </div>
+        </div>
+        <button
+          class="bg-gray-200 mx-auto block mt-4 px-8 py-1 rounded-md"
+          @click="addItemToCart"
+        >
+          Tambah
+        </button>
+        <table class="w-full mt-4">
+          <thead>
+            <tr>
+              <th class="border border-black">ID Barang</th>
+              <th class="border border-black">Nama Barang</th>
+              <th class="border border-black">Harga Satuan</th>
+              <th class="border border-black">Qty</th>
+              <th class="border border-black">Jumlah</th>
+              <th class="border border-black">Opsi</th>
+            </tr>
+          </thead>
+          <thead>
+            <tr v-for="item in cartItems">
+              <td class="border border-black">{{ item.id }}</td>
+              <td class="border border-black">{{ item.nama }}</td>
+              <td class="border border-black">
+                {{ currency(item.hargaSatuan) }}
+              </td>
+              <td class="border border-black text-center">{{ item.qty }}</td>
+              <td class="border border-black">
+                {{ currency(item.totalHarga) }}
+              </td>
+              <td class="border border-black">
+                <button
+                  class="text-red-500 underline"
+                  @click="removeItem(index)"
+                >
+                  hapus
+                </button>
+              </td>
+            </tr>
+          </thead>
+        </table>
+        <div class="flex items-center justify-between mt-4 space-x-3">
+          <div class="border border-black w-full h-full">
+            <table>
+              <tr>
+                <td>Sub Total</td>
+                <td class="bg-gray-200 p-1 rounded-md">
+                  {{ currency(calculateSubtotal()) }}
+                </td>
+              </tr>
+              <tr>
+                <td>Diskon</td>
+                <td class="bg-gray-200 p-1 rounded-md">10%</td>
+                <td>=</td>
+                <td class="bg-gray-200 p-1 rounded-md">
+                  {{ currency(calculateDiscount()) }}
+                </td>
+              </tr>
+              <tr>
+                <td>Total harga</td>
+                <td class="bg-gray-200 p-1 rounded-md">
+                  {{ currency(calculateTotalPrice()) }}
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="border border-black p-4 w-full">
+            <table>
+              <tr>
+                <td>Bayar</td>
+                <td class="bg-gray-200 p-1 rounded-md">
+                  <input
+                    type="number"
+                    v-model="jumlahBayar"
+                    class="p-1 rounded-md bg-gray-200"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td>Kembalian</td>
+                <td class="bg-gray-200 p-1 rounded-md">
+                  {{ currency(kembalian) }}
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="bg-green-400 p-4">
+            <button @click="buy">Selesai</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      var app = new Vue({
+        el: "#app",
+        data: {
+          product: [
+            {
+              id: 1,
+              nama: "Keyboard Gamink",
+              harga: 300000,
+              quantity: 0,
+              stock: 3,
+            },
+            {
+              id: 2,
+              nama: "Basreng Daunjeruk",
+              harga: 30000,
+              quantity: 0,
+              stock: 12,
+            },
+            {
+              id: 3,
+              nama: "Monitor 144hz",
+              harga: 1000000,
+              quantity: 0,
+              stock: 2,
+            },
+            {
+              id: 4,
+              nama: "Iphona 13 pro",
+              harga: 8000000,
+              quantity: 0,
+              stock: 1,
+            },
+            { id: 5, nama: "Ollo A3s", harga: 1200000, quantity: 0, stock: 9 },
+          ],
+          selectedProduct: "",
+          cartItems: [],
+          qty: 1,
+          jumlahBayar: 500000,
+        },
+        methods: {
+          currency(harga) {
+            return harga.toLocaleString("id-ID", {
+              style: "currency",
+              currency: "IDR",
+            });
+          },
+          getPlaceholder(productName) {
+            const selectedItem = this.product.find(
+              (item) => item.nama === productName
+            );
+            return selectedItem
+              ? this.currency(selectedItem.harga)
+              : "Pilih barang dulu";
+          },
+          getStock(productName) {
+            const selectedItem = this.product.find(
+              (item) => item.nama === productName
+            );
+            return selectedItem ? selectedItem.stock : "Pilih barang dulu";
+          },
+          addItemToCart() {
+            const selectedProduct = this.product.find(
+              (item) => item.nama === this.selectedProduct
+            );
+
+            if (selectedProduct) {
+              const totalHarga = selectedProduct.harga * this.qty;
+
+              this.cartItems.push({
+                id: selectedProduct.id,
+                nama: selectedProduct.nama,
+                hargaSatuan: selectedProduct.harga,
+                qty: this.qty,
+                totalHarga: totalHarga,
+              });
+            }
+          },
+          removeItem(index) {
+            this.cartItems.splice(index, 1);
+          },
+          calculateSubtotal() {
+            return this.cartItems.reduce(
+              (total, item) => total + item.totalHarga,
+              0
+            );
+          },
+          calculateDiscount() {
+            const subtotal = this.calculateSubtotal();
+            return subtotal * 0.1;
+          },
+          calculateTotalPrice() {
+            const subtotal = this.calculateSubtotal();
+            const discount = this.calculateDiscount();
+            return subtotal - discount;
+          },
+
+          buy() {
+            alert("transaksi selesai!");
+          },
+        },
+        computed: {
+          kembalian() {
+            const totalHarga = this.calculateTotalPrice();
+            return this.jumlahBayar >= totalHarga
+              ? this.jumlahBayar - totalHarga
+              : "Nabung dulu";
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
